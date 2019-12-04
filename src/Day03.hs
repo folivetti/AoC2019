@@ -48,7 +48,8 @@ intersection ((x1,y1),(x2,y2)) ((x3,y3),(x4,y4))
   | y1==y2           = if   within x3 x1 x2 && within y1 y3 y4
                        then Just (x3, y1) 
                        else Nothing
-    where within x x1 x2 = (x >= min x1 x2) && (x <= max x1 x2)
+    where 
+      within x x1 x2   = (x >= min x1 x2) && (x <= max x1 x2)
              
 findIntersections :: [(Coord, Coord)] -> [(Coord, Coord)] -> [Coord]
 findIntersections ws1 ws2 = filter (/=(0,0)) boundedIntersects
