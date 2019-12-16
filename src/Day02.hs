@@ -1,4 +1,4 @@
-module Main where
+module Day02 where
 
 import Data.List.Split (chunksOf, splitOn)
 import qualified Data.Map as M
@@ -62,8 +62,8 @@ findOutput x xs = (head . filter isX) ops
         ops   = [(n, v) | n <- range, v <- range]
         isX = (==x) . head . compute . (flip. uncurry) replaceCode xs
 
-main :: IO ()
-main = do
+day02 :: IO ()
+day02 = do
   day02 <- replaceCode 12 2 . fmap read . splitOn "," <$> readFile "day02.txt"
 
   print $ foldl applyRule examples2 codes

@@ -1,4 +1,4 @@
-module Main where
+module Day03 where
 
 import Data.List.Split (chunksOf, splitOn)
 import Data.Maybe (mapMaybe)
@@ -77,8 +77,8 @@ costWireCoord ws (x,y) = go ws (0,0)
 totCostWireCoord :: [Wire] -> [Wire] -> [Coord] -> [Int]
 totCostWireCoord ws1 ws2 cs = zipWith (+) (costWireCoord ws1 <$> cs) (costWireCoord ws2 <$> cs)
 
-main :: IO ()
-main = do
+day03 :: IO ()
+day03 = do
   day03 <- fmap (fmap readWire . splitOn ",") . lines <$> readFile "day03.txt"
 
   let ws1 = day03 !! 0 --wire2lines wire5

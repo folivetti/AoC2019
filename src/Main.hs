@@ -1,3 +1,5 @@
 module Main where
 
-main = print "Ola"
+import Day13
+
+main = day13

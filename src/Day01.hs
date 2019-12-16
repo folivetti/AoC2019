@@ -1,4 +1,4 @@
-module Main where
+module Day01 where
 
 import Data.List.Split (chunksOf, splitOn)
 import Data.Maybe (mapMaybe)
@@ -21,8 +21,8 @@ foldWithMap f op = foldr (\x y -> f x `op` y)
 
 examples = [12, 14, 1969, 100756]
 
-main :: IO ()
-main = do
+day01 :: IO ()
+day01 = do
   day01 <- fmap read . lines <$> readFile "day01.txt"
 
   print $ howManyFuel   <$> examples

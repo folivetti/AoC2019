@@ -1,4 +1,3 @@
-
 module Day04 where
 
 import Data.List

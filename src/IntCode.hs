@@ -26,7 +26,7 @@ createMachineFromList xs = M t 0 [] Nothing 0 (length t)
 -- we start counting opcodes from 1
 -- Deriving Enum make it so `toEnum 1 = Add`, `toEnum 2 = Mul`, etc.
 data Op = NoOP | Add | Mul | Read | Write | JmpNZ | JmpZ | Cmp | Equal | Base | STOP
-            deriving (Enum, Show)
+            deriving (Enum, Show, Eq)
 
 -- | Perform one step of execution of a machine
 -- it returns the new state and maybe an output
@@ -95,7 +95,7 @@ runReader m@(M t c (i:is) o b _) = m{ tape = t', cursor = c+2, input = is }
     modes = (t M.! c) `div` 100
     mode1 = getMode modes 1
     t'   = M.insert (getWriteArg t c 1 b mode1) i t
-runReader m@(M t c [] o _ _) = error (show t ++ show o ++ " No input") 
+runReader m@(M t c [] o _ _) = m 
 
 -- | Run writing operation
 runWriter :: Machine -> Machine
@@ -154,3 +154,17 @@ runMachineGenerator m | finished = case mo of
   where
     (m', mo) = step m
     finished = cursor m' == size m'
+
+runUntilRead :: Machine -> [Int] -> (Machine, [Int])
+runUntilRead m os | isHalted m' || waiting  = case mo of 
+                                               Nothing -> (m', reverse os)
+                                               Just x  -> (m', reverse (x:os))
+                  | otherwise               = case mo of
+                                               Nothing -> runUntilRead m' os
+                                               Just x  -> runUntilRead m'{output=Nothing} (x:os)
+  where
+    (m', mo) = step m
+    waiting  = (opCode m' == Read) && (null $ input m')
+
+isHalted :: Machine -> Bool
+isHalted m = cursor m == size m
