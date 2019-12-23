@@ -164,7 +164,7 @@ runUntilRead m os | isHalted m' || waiting  = case mo of
                                                Just x  -> runUntilRead m'{output=Nothing} (x:os)
   where
     (m', mo) = step m
-    waiting  = (opCode m' == Read) && (null $ input m')
+    waiting  = (opCode m' == Read) && null (input m')
 
 isHalted :: Machine -> Bool
 isHalted m = cursor m == size m
