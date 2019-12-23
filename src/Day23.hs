@@ -21,9 +21,9 @@ processOutput q [i,x,y] = q'
     q' = M.insert i qi q
 processOutput q os = error (show os)
 
-processAllOutputs :: OutQueue -> [Int] -> OutQueue
-processAllOutputs q []       = q
-processAllOutputs q (i:x:y:oss) = processAllOutputs q' oss
+processAllOutputs :: [Int] -> OutQueue -> OutQueue
+processAllOutputs []          q = q
+processAllOutputs (i:x:y:oss) q = processAllOutputs oss q'
   where
     q' = processOutput q [i,x,y]
 
@@ -40,32 +40,30 @@ popOutputs = M.map pop
                Empty    -> Empty
                x :<| q' -> q'
 
+getNextNat :: OutQueue -> Maybe [Int] -> Maybe [Int]
+getNextNat q nat = case q M.!? 255 of
+                     Just (x :<| qs) -> Just x
+                     _               -> nat
 
-stepNetwork :: (Machines, OutQueue) -> (Machines, OutQueue)
-stepNetwork (ms, q) = (ms', q'')
-  where
-    run  = M.map (`runUntilRead` []) ms          -- run machines with current inputs: M.Map Int (Machine, Out)
-    os   = concatMap snd $ M.elems run           -- concat all outputs
-    q'   = popOutputs q                          -- remove used inputs
-    q''  = processAllOutputs q' os               -- insert outputs into queue
-    ms'  = M.mapWithKey (\k (m,o) -> m{ input=getOutput k q'' }) run
+toMaybe :: Bool -> Maybe a -> Maybe a
+toMaybe b v = if b then v else Nothing
 
-stepNetwork2 :: (Machines, OutQueue, ([Int], Bool)) -> (Machines, OutQueue, ([Int], Bool))
-stepNetwork2 (ms, q, (nat,_)) = (ms', q'', (nat',b))
+updateIf :: Bool -> Machines -> OutQueue -> Maybe [Int] -> Machines
+updateIf b ms q nat = if b
+                      then M.insert 0 m{ input=fromMaybe [] nat } ms
+                      else M.mapWithKey (\k m -> m{ input=getOutput k q }) ms
   where
-    run  = M.map (`runUntilRead` []) ms          -- run machines with current inputs: M.Map Int (Machine, Out)
-    os   = concatMap snd $ M.elems run           -- concat all outputs
-    q'   = popOutputs q                          -- remove used inputs
-    q''  = processAllOutputs q' os               -- insert outputs into queue
-    nat' = case q'' M.!? 255 of
-             Nothing -> nat
-             Just Empty -> nat
-             Just (x :<| qs) -> x
-    tmp  = M.map fst run
-    b    = all (==Empty) (init $ M.elems q'')
-    ms'  = if   b 
-           then M.insert 0 ((tmp M.! 0){ input=nat' }) tmp
-           else M.mapWithKey (\k (m,o) -> m{ input=getOutput k q'' }) run
+    m = ms M.! 0
+
+stepNetwork :: (Machines, OutQueue, Maybe [Int]) -> (Machines, OutQueue, Maybe [Int])
+stepNetwork (ms, q, nat) = (ms', q', nat')
+  where
+    run    = M.map (`runUntilRead` []) ms          -- run machines with current inputs: M.Map Int (Machine, Out)
+    os     = concatMap snd $ M.elems run           -- concat all outputs
+    q'     = processAllOutputs os (popOutputs q)   -- remove used inputs and enqueue new ones
+    isIdle = all (==Empty) (init $ M.elems q')     -- are the machines idle?
+    nat'   = toMaybe isIdle (getNextNat q' nat)
+    ms'    = updateIf isIdle (M.map fst run) q' nat'
 
 getRepeat []                   = 0
 getRepeat (x:y:xs) | x==y      = x
@@ -80,10 +78,8 @@ day23 = do
     net   = M.fromList [ (i, m{ input=[i,-1] }) | i <- [0..49] ]
     queue = M.fromList [ (i, Q.empty)           | i <- [0..49] ]
 
-    running  = iterate stepNetwork (net, queue)
-    answerA  = dropWhile (\(ms,q) -> isNothing (q M.!? 255)) running
+    running  = iterate stepNetwork (net, queue, Nothing)
+    answer   = (filter isJust . map (\(_,_,n) -> n)) running
 
-    running2 = iterate stepNetwork2 (net, queue, ([], False))
-    answerB  = map (\(_,_,n) -> n) running2
-  print $ snd $ head answerA
-  print $ getRepeat  $ map ((!!1).fst) $ filter snd $ filter (not.null.fst) answerB
+  print $ head answer
+  print $ (getRepeat . map ((!!1).fromJust)) answer
