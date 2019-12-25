@@ -1,0 +1,36 @@
+north
+take sand
+north
+north
+take astrolabe
+south
+south
+west
+west
+take mutex
+east
+east
+south
+east
+take klein bottle
+east
+take semiconductor
+west
+north
+north
+north
+take dehydrated water
+south
+south
+south
+west
+west
+north
+take shell
+south
+south
+west
+take ornament
+west
+south
+south
